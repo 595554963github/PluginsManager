@@ -1,6 +1,8 @@
 using System;
 using System.ComponentModel;
 using System.IO;
+using System.IO.Compression;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading;
@@ -26,6 +28,8 @@ namespace PluginManagerWPF
 
         public event Action<object, bool>? DownloadCompleted;
 
+        private string PluginsDirectory => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins");
+
         public DownloadProgressWindow(PluginInfo plugin)
         {
             InitializeComponent();
@@ -48,7 +52,7 @@ namespace PluginManagerWPF
 
             try
             {
-                string pluginsDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins");
+                string pluginsDir = PluginsDirectory;
                 if (!Directory.Exists(pluginsDir))
                 {
                     Directory.CreateDirectory(pluginsDir);
@@ -60,6 +64,11 @@ namespace PluginManagerWPF
                 {
                     totalBytes = await GetFileSize(plugin.DownloadUrl);
                     await DownloadFileAsync(plugin.DownloadUrl, filePath);
+                }
+
+                if (plugin.IsZipFile && !string.IsNullOrEmpty(plugin.ExtractFolder))
+                {
+                    await ExtractZipFile();
                 }
 
                 isDownloadCompleted = true;
@@ -88,6 +97,59 @@ namespace PluginManagerWPF
             finally
             {
                 isDownloading = false;
+            }
+        }
+
+        private async Task ExtractZipFile()
+        {
+            try
+            {
+                string extractPath = Path.Combine(PluginsDirectory, plugin.ExtractFolder);
+
+                if (Directory.Exists(extractPath))
+                {
+                    Directory.Delete(extractPath, true);
+                }
+                Directory.CreateDirectory(extractPath);
+
+                await Task.Run(() =>
+                {
+                    ZipFile.ExtractToDirectory(filePath, extractPath, true);
+
+                    string nestedPath = Path.Combine(extractPath, plugin.ExtractFolder);
+                    string expectedExeInNested = Path.Combine(nestedPath, plugin.ExeFileName);
+
+                    if (Directory.Exists(nestedPath) && File.Exists(expectedExeInNested))
+                    {
+                        foreach (var file in Directory.GetFiles(nestedPath))
+                        {
+                            string fileName = Path.GetFileName(file);
+                            string destFile = Path.Combine(extractPath, fileName);
+                            File.Move(file, destFile, true);
+                        }
+
+                        foreach (var dir in Directory.GetDirectories(nestedPath))
+                        {
+                            string dirName = Path.GetFileName(dir);
+                            string destDir = Path.Combine(extractPath, dirName);
+                            Directory.Move(dir, destDir);
+                        }
+
+                        Directory.Delete(nestedPath, true);
+                    }
+                });
+
+                string expectedExePath = Path.Combine(extractPath, plugin.ExeFileName);
+                if (!File.Exists(expectedExePath))
+                {
+                    throw new Exception($"解压后未找到目标文件: {plugin.ExeFileName}。请检查ZIP文件结构。");
+                }
+
+                File.Delete(filePath);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"解压失败：{ex.Message}");
             }
         }
 
