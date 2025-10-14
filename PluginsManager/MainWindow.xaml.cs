@@ -35,7 +35,7 @@ namespace PluginManagerWPF
                 {
                     if (success)
                     {
-                        plugin.IsDownloaded = true;
+                        pluginManager.InitializePlugins();
                         RefreshPluginList();
                         MessageBox.Show($"{plugin.DisplayName}下载完成！", "成功",
                             MessageBoxButton.OK, MessageBoxImage.Information);
