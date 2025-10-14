@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 using System.Windows;
@@ -30,9 +31,11 @@ namespace PluginManagerWPF
                 }
             }
         }
-
         public bool IsExternalTool { get; set; }
         public bool IsBuiltInDll { get; set; }
+        public bool IsZipFile { get; set; }
+        public string ExeFileName { get; set; } = string.Empty;
+        public string ExtractFolder { get; set; } = string.Empty;
 
         public string PluginType
         {
@@ -40,6 +43,7 @@ namespace PluginManagerWPF
             {
                 if (IsBuiltInDll) return "类库文件";
                 if (IsExternalTool) return "可执行程序";
+                if (IsZipFile) return "压缩包文件";
                 return "PE文件";
             }
         }
@@ -253,25 +257,53 @@ namespace PluginManagerWPF
                     IsBuiltInDll = false
                 },
                 new PluginInfo
-            {
-                Name = "Motrix",
-                DisplayName = "免费不限速下载器",
-                DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/Motrix_x64.exe",
-                FileName = "Motrix_x64.exe",
-                IsDownloaded = false,
-                IsExternalTool = true,
-                IsBuiltInDll = false
-            },
-            new PluginInfo
-            {
-                Name = "UmodelHelper",
-                DisplayName = "Umodel辅助器",
-                DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/UmodelHelper.exe",
-                FileName = "UmodelHelper.exe",
-                IsDownloaded = false,
-                IsExternalTool = true,
-                IsBuiltInDll = false
-            }
+                {
+                    Name = "Motrix",
+                    DisplayName = "免费不限速下载器",
+                    DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/Motrix_x64.exe",
+                    FileName = "Motrix_x64.exe",
+                    IsExternalTool = true,
+                    IsBuiltInDll = false
+                },
+                new PluginInfo
+                {
+                    Name = "UmodelHelper",
+                    DisplayName = "Umodel辅助器",
+                    DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/UmodelHelper.exe",
+                    FileName = "UmodelHelper.exe",
+                    IsExternalTool = true,
+                    IsBuiltInDll = false
+                },
+                new PluginInfo
+                {
+                    Name = "cmake-gui",
+                    DisplayName = "cmakegui汉化版",
+                    DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/cmake-gui.exe",
+                    FileName = "cmake-gui.exe",
+                    IsExternalTool = true,
+                    IsBuiltInDll = false
+                },
+                new PluginInfo
+                {
+                    Name = "QuickWaveBank",
+                    DisplayName = "xwb打包解包工具",
+                    DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/QuickWaveBank.exe",
+                    FileName = "QuickWaveBank.exe",
+                    IsExternalTool = true,
+                    IsBuiltInDll = false
+                },
+                new PluginInfo
+                {
+                    Name = "FSBank",
+                    DisplayName = "FSB打包工具",
+                    DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/fsbank.zip",
+                    FileName = "fsbank.zip",
+                    IsExternalTool = true,
+                    IsBuiltInDll = false,
+                    IsZipFile = true,
+                    ExeFileName = "fsbank.exe",
+                    ExtractFolder = "fsbank"
+                }
             };
 
             foreach (var plugin in pluginList)
@@ -289,14 +321,21 @@ namespace PluginManagerWPF
 
             foreach (var plugin in Plugins)
             {
-                string filePath = Path.Combine(PluginsDirectory, plugin.FileName);
+                string filePath;
+                if (plugin.IsZipFile && !string.IsNullOrEmpty(plugin.ExtractFolder))
+                {
+                    filePath = Path.Combine(PluginsDirectory, plugin.ExtractFolder, plugin.ExeFileName);
+                }
+                else
+                {
+                    filePath = Path.Combine(PluginsDirectory, plugin.FileName);
+                }
                 plugin.IsDownloaded = File.Exists(filePath);
             }
         }
 
         public void LaunchPlugin(PluginInfo plugin)
         {
-            // 检查是否为不可启动的依赖文件
             if (IsDependencyFile(plugin))
             {
                 MessageBox.Show($"{plugin.DisplayName} 是依赖文件，无法直接启动。", "提示",
@@ -313,7 +352,15 @@ namespace PluginManagerWPF
 
             try
             {
-                string filePath = Path.Combine(PluginsDirectory, plugin.FileName);
+                string filePath;
+                if (plugin.IsZipFile)
+                {
+                    filePath = Path.Combine(PluginsDirectory, plugin.ExtractFolder, plugin.ExeFileName);
+                }
+                else
+                {
+                    filePath = Path.Combine(PluginsDirectory, plugin.FileName);
+                }
 
                 if (!File.Exists(filePath))
                 {
@@ -323,7 +370,7 @@ namespace PluginManagerWPF
                     return;
                 }
 
-                if (plugin.IsExternalTool)
+                if (plugin.IsExternalTool || plugin.IsZipFile)
                 {
                     Process.Start(new ProcessStartInfo
                     {
@@ -409,12 +456,12 @@ namespace PluginManagerWPF
                     errorDetails += $"- {loaderException?.Message}\n";
                 }
 
-                MessageBox.Show($"加载DLL插件失败: {errorDetails}", "错误",
+                MessageBox.Show($"加载DLL插件失败:{errorDetails}", "错误",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"加载DLL插件失败: {ex.Message}", "错误",
+                MessageBox.Show($"加载DLL插件失败:{ex.Message}", "错误",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -424,14 +471,23 @@ namespace PluginManagerWPF
             try
             {
                 string filePath = Path.Combine(PluginsDirectory, plugin.FileName);
+
                 if (File.Exists(filePath))
                 {
                     if (plugin.IsBuiltInDll && IsDllLoaded(plugin.FileName))
                     {
                         throw new Exception($"{plugin.DisplayName}正在使用中,请重启插件管理器后再尝试卸载。");
                     }
-
                     File.Delete(filePath);
+                }
+
+                if (plugin.IsZipFile && !string.IsNullOrEmpty(plugin.ExtractFolder))
+                {
+                    string extractFolderPath = Path.Combine(PluginsDirectory, plugin.ExtractFolder);
+                    if (Directory.Exists(extractFolderPath))
+                    {
+                        Directory.Delete(extractFolderPath, true);
+                    }
                 }
 
                 plugin.IsDownloaded = false;
