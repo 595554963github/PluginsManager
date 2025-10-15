@@ -1,27 +1,51 @@
 using System;
 using System.Windows;
+using System.Windows.Data;
+using System.ComponentModel;
+using System.Linq;
 
 namespace PluginManagerWPF
 {
     public partial class MainWindow : Window
     {
         private PluginManager pluginManager;
+        private ListSortDirection currentSortDirection = ListSortDirection.Ascending;
+        private ICollectionView? pluginsView;
 
         public MainWindow()
         {
             InitializeComponent();
             pluginManager = new PluginManager();
-            RefreshPluginList();
+            InitializePluginsView();
+        }
+
+        private void InitializePluginsView()
+        {
+            pluginsView = CollectionViewSource.GetDefaultView(pluginManager.Plugins);
+            PluginsDataGrid.ItemsSource = pluginsView;
+
+            SortByDisplayName(currentSortDirection);
         }
 
         private void RefreshPluginList()
         {
-            PluginsListView.ItemsSource = pluginManager.Plugins;
+            pluginsView?.Refresh();
+        }
+
+        private void SortByDisplayName(ListSortDirection direction)
+        {
+            if (pluginsView == null) return;
+
+            pluginsView.SortDescriptions.Clear();
+            pluginsView.SortDescriptions.Add(new SortDescription("DisplayName", direction));
+            currentSortDirection = direction;
+
+            SortButton.Content = direction == ListSortDirection.Ascending ? "排序↑" : "排序↓";
         }
 
         private PluginInfo? GetSelectedPlugin()
         {
-            return PluginsListView.SelectedItem as PluginInfo;
+            return PluginsDataGrid.SelectedItem as PluginInfo;
         }
 
         private void DownloadButton_Click(object sender, RoutedEventArgs e)
@@ -77,7 +101,7 @@ namespace PluginManagerWPF
                         if (ex.Message.Contains("重启程序"))
                         {
                             var restartResult = MessageBox.Show(
-                                $"{ex.Message}\n\n是否立即重启程序管理器？",
+                                $"{ex.Message}\n\n是否立即重启插件管理器？",
                                 "需要重启",
                                 MessageBoxButton.YesNo,
                                 MessageBoxImage.Warning);
@@ -138,10 +162,19 @@ namespace PluginManagerWPF
             }
         }
 
+        private void SortButton_Click(object sender, RoutedEventArgs e)
+        {
+            var newDirection = currentSortDirection == ListSortDirection.Ascending
+                ? ListSortDirection.Descending
+                : ListSortDirection.Ascending;
+
+            SortByDisplayName(newDirection);
+        }
+
         private void RefreshButton_Click(object sender, RoutedEventArgs e)
         {
             pluginManager.InitializePlugins();
             RefreshPluginList();
-        }      
+        }
     }
 }
