@@ -294,6 +294,102 @@ namespace PluginManagerWPF
                 },
                 new PluginInfo
                 {
+                    Name = "CpkFileBuilder",
+                    DisplayName = "CPK官方打包解包工具",
+                    DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/CpkFileBuilder.zip",
+                    FileName = "CpkFileBuilder.zip",
+                    IsExternalTool = true,
+                    IsBuiltInDll = false,
+                    IsZipFile = true,
+                    ExeFileName = "CpkFileBuilder.exe",
+                    ExtractFolder = "CpkFileBuilder"
+                },
+                new PluginInfo
+                {
+                    Name = "IDM",
+                    DisplayName = "IDM下载器",
+                    DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/IDM.zip",
+                    FileName = "IDM.zip",
+                    IsExternalTool = true,
+                    IsBuiltInDll = false,
+                    IsZipFile = true,
+                    ExeFileName = "IDMan.exe",
+                    ExtractFolder = "IDM"
+                },
+                new PluginInfo
+                {
+                    Name = "PVRViewer",
+                    DisplayName = "世嘉游戏PVR查看器",
+                    DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/PVRViewer.zip",
+                    FileName = "PVRViewer.zip",
+                    IsExternalTool = true,
+                    IsBuiltInDll = false,
+                    IsZipFile = true,
+                    ExeFileName = "PVRViewer.exe",
+                    ExtractFolder = "PVRViewer"
+                },
+                new PluginInfo
+                {
+                    Name = "GD-ROM-Explorer",
+                    DisplayName = "世嘉游戏rom解包器",
+                    DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/GD-ROM-Explorer.zip",
+                    FileName = "GD-ROM-Explorer.zip",
+                    IsExternalTool = true,
+                    IsBuiltInDll = false,
+                    IsZipFile = true,
+                    ExeFileName = "GD-ROM Explorer.exe",
+                    ExtractFolder = "GD-ROM-Explorer"
+                },
+                new PluginInfo
+                {
+                    Name = "CDmage",
+                    DisplayName = "光盘rom解包器",
+                    DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/CDmage.zip",
+                    FileName = "CDmage.zip",
+                    IsExternalTool = true,
+                    IsBuiltInDll = false,
+                    IsZipFile = true,
+                    ExeFileName = "CDmage.exe",
+                    ExtractFolder = "CDmage"
+                },
+                new PluginInfo
+                {
+                    Name = "VGMTrans",
+                    DisplayName = "VGMTrans音频提取器",
+                    DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/VGMTrans.zip",
+                    FileName = "VGMTrans.zip",
+                    IsExternalTool = true,
+                    IsBuiltInDll = false,
+                    IsZipFile = true,
+                    ExeFileName = "VGMTrans.exe",
+                    ExtractFolder = "VGMTrans"
+                },
+                new PluginInfo
+                {
+                    Name = "CitricComposer",
+                    DisplayName = "柠檬音乐工坊",
+                    DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/CitricComposer.zip",
+                    FileName = "CitricComposer.zip",
+                    IsExternalTool = true,
+                    IsBuiltInDll = false,
+                    IsZipFile = true,
+                    ExeFileName = "Citric Composer.exe",
+                    ExtractFolder = "CitricComposer"
+                },
+                new PluginInfo
+                {
+                    Name = "toolbox",
+                    DisplayName = "任天堂toolbox",
+                    DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/toolbox.zip",
+                    FileName = "toolbox.zip",
+                    IsExternalTool = true,
+                    IsBuiltInDll = false,
+                    IsZipFile = true,
+                    ExeFileName = "toolbox.exe",
+                    ExtractFolder = "toolbox"
+                },
+                new PluginInfo
+                {
                     Name = "FSBank",
                     DisplayName = "FSB打包工具",
                     DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/fsbank.zip",
@@ -353,9 +449,12 @@ namespace PluginManagerWPF
             try
             {
                 string filePath;
+                string workingDirectory = PluginsDirectory;
+
                 if (plugin.IsZipFile)
                 {
                     filePath = Path.Combine(PluginsDirectory, plugin.ExtractFolder, plugin.ExeFileName);
+                    workingDirectory = Path.Combine(PluginsDirectory, plugin.ExtractFolder);
                 }
                 else
                 {
@@ -375,7 +474,8 @@ namespace PluginManagerWPF
                     Process.Start(new ProcessStartInfo
                     {
                         FileName = filePath,
-                        UseShellExecute = true
+                        UseShellExecute = true,
+                        WorkingDirectory = workingDirectory
                     });
                 }
                 else if (plugin.IsBuiltInDll)
