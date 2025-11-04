@@ -141,6 +141,15 @@ namespace PluginManagerWPF
                 },
                 new PluginInfo
                 {
+                    Name = "FavoritesManager",
+                    DisplayName = "收藏夹管理器",
+                    DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/FavoritesManager.dll",
+                    FileName = "FavoritesManager.dll",
+                    IsExternalTool = false,
+                    IsBuiltInDll = true
+                },
+                new PluginInfo
+                {
                     Name = "SuperToolbox",
                     DisplayName = "超级工具箱",
                     DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/Super-toolbox.dll",
@@ -390,6 +399,24 @@ namespace PluginManagerWPF
                 },
                 new PluginInfo
                 {
+                    Name = "CPKBrowser.exe",
+                    DisplayName = "CPK浏览器",
+                    DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/CPKBrowser.exe",
+                    FileName = "CPKBrowser.exe",
+                    IsExternalTool = true,
+                    IsBuiltInDll = false
+                },
+                new PluginInfo
+                {
+                    Name = "Nartools.exe",
+                    DisplayName = "CSOL-Nar解包器",
+                    DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/Nartools.exe",
+                    FileName = "Nartools.exe",
+                    IsExternalTool = true,
+                    IsBuiltInDll = false
+                },
+                new PluginInfo
+                {
                     Name = "FSBank",
                     DisplayName = "FSB打包工具",
                     DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/fsbank.zip",
@@ -506,46 +533,26 @@ namespace PluginManagerWPF
             {
                 Assembly assembly = Assembly.LoadFrom(filePath);
 
+                var windowTypes = assembly.GetTypes()
+                    .Where(t => typeof(System.Windows.Window).IsAssignableFrom(t) && !t.IsAbstract)
+                    .ToList();
+
                 var formTypes = assembly.GetTypes()
                     .Where(t => typeof(System.Windows.Forms.Form).IsAssignableFrom(t) && !t.IsAbstract)
                     .ToList();
 
-                if (formTypes.Count == 0)
+                if (windowTypes.Count == 0 && formTypes.Count == 0)
                 {
-                    throw new Exception($"在{plugin.FileName}中找不到窗体类");
+                    throw new Exception($"在{plugin.FileName} 中找不到窗体类(WPF Window或WinForms Form)");
                 }
 
-                Type? mainFormType = formTypes.FirstOrDefault(t =>
-                    t.Name.Contains("Main", StringComparison.OrdinalIgnoreCase)) ?? formTypes[0];
-
-                if (mainFormType == null)
+                if (windowTypes.Count > 0)
                 {
-                    throw new Exception($"无法确定主窗体类型");
-                }
-
-                System.Windows.Forms.Form? existingInstance = System.Windows.Forms.Application.OpenForms.Cast<System.Windows.Forms.Form>()
-                    .FirstOrDefault(form => form.GetType() == mainFormType);
-
-                if (existingInstance != null)
-                {
-                    if (existingInstance.WindowState == System.Windows.Forms.FormWindowState.Minimized)
-                    {
-                        existingInstance.WindowState = System.Windows.Forms.FormWindowState.Normal;
-                    }
-                    existingInstance.BringToFront();
-                    existingInstance.Focus();
-                    return;
-                }
-
-                System.Windows.Forms.Form? mainForm = Activator.CreateInstance(mainFormType) as System.Windows.Forms.Form;
-                if (mainForm != null)
-                {
-                    mainForm.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-                    mainForm.Show();
+                    LaunchWpfWindow(plugin, windowTypes);
                 }
                 else
                 {
-                    throw new Exception($"无法创建窗体实例:{mainFormType.FullName}");
+                    LaunchWinFormsForm(plugin, formTypes);
                 }
             }
             catch (ReflectionTypeLoadException ex)
@@ -565,7 +572,68 @@ namespace PluginManagerWPF
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+        private void LaunchWpfWindow(PluginInfo plugin, List<Type> windowTypes)
+        {
+            Type? mainWindowType = windowTypes.FirstOrDefault(t =>
+                t.Name.Contains("Main", StringComparison.OrdinalIgnoreCase)) ?? windowTypes[0];
 
+            if (mainWindowType == null)
+            {
+                throw new Exception("无法确定主窗口类型");
+            }
+
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            {
+                var existingWindow = System.Windows.Application.Current.Windows.Cast<System.Windows.Window>()
+                    .FirstOrDefault(w => w.GetType() == mainWindowType);
+
+                if (existingWindow != null)
+                {
+                    if (existingWindow.WindowState == System.Windows.WindowState.Minimized)
+                    {
+                        existingWindow.WindowState = System.Windows.WindowState.Normal;
+                    }
+                    existingWindow.Activate();
+                    existingWindow.Focus();
+                    return;
+                }
+
+                System.Windows.Window? mainWindow = Activator.CreateInstance(mainWindowType) as System.Windows.Window;
+                if (mainWindow != null)
+                {
+                    mainWindow.WindowStartupLocation = System.Windows.WindowStartupLocation.CenterScreen;
+                    mainWindow.Show();
+                }
+                else
+                {
+                    throw new Exception($"无法创建窗口实例: {mainWindowType.FullName}");
+                }
+            });
+        }
+        private void LaunchWinFormsForm(PluginInfo plugin, List<Type> formTypes)
+        {
+            Type? mainFormType = formTypes.FirstOrDefault(t =>
+                t.Name.Contains("Main", StringComparison.OrdinalIgnoreCase)) ?? formTypes[0];
+
+            if (mainFormType == null) return;
+
+            var existingInstance = System.Windows.Forms.Application.OpenForms.Cast<System.Windows.Forms.Form>()
+                .FirstOrDefault(form => form.GetType() == mainFormType);
+
+            if (existingInstance != null)
+            {
+                if (existingInstance.WindowState == System.Windows.Forms.FormWindowState.Minimized)
+                    existingInstance.WindowState = System.Windows.Forms.FormWindowState.Normal;
+                existingInstance.BringToFront();
+                return;
+            }
+
+            if (Activator.CreateInstance(mainFormType) is System.Windows.Forms.Form mainForm)
+            {
+                mainForm.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+                mainForm.Show();
+            }
+        }
         public void UninstallPlugin(PluginInfo plugin)
         {
             try
