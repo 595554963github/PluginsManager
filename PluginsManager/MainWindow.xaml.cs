@@ -2,7 +2,6 @@ using System;
 using System.Windows;
 using System.Windows.Data;
 using System.ComponentModel;
-using System.Linq;
 
 namespace PluginManagerWPF
 {
@@ -23,10 +22,23 @@ namespace PluginManagerWPF
         {
             pluginsView = CollectionViewSource.GetDefaultView(pluginManager.Plugins);
             PluginsDataGrid.ItemsSource = pluginsView;
-
+            pluginsView.Filter = PluginFilter;
             SortByDisplayName(currentSortDirection);
         }
+        private bool PluginFilter(object item)
+        {
+            if (string.IsNullOrEmpty(SearchTextBox?.Text))
+                return true;
 
+            var plugin = item as PluginInfo;
+            if (plugin == null)
+                return false;
+
+            string searchText = SearchTextBox.Text.Trim().ToLower();
+            return plugin.DisplayName.ToLower().Contains(searchText) ||
+                   plugin.FileName.ToLower().Contains(searchText) ||
+                   plugin.Name.ToLower().Contains(searchText);
+        }
         private void RefreshPluginList()
         {
             pluginsView?.Refresh();
@@ -46,6 +58,10 @@ namespace PluginManagerWPF
         private PluginInfo? GetSelectedPlugin()
         {
             return PluginsDataGrid.SelectedItem as PluginInfo;
+        }
+        private void SearchTextBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            pluginsView?.Refresh();
         }
 
         private void DownloadButton_Click(object sender, RoutedEventArgs e)
@@ -169,12 +185,6 @@ namespace PluginManagerWPF
                 : ListSortDirection.Ascending;
 
             SortByDisplayName(newDirection);
-        }
-
-        private void RefreshButton_Click(object sender, RoutedEventArgs e)
-        {
-            pluginManager.InitializePlugins();
-            RefreshPluginList();
-        }
+        }      
     }
 }
