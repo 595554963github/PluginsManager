@@ -4,7 +4,6 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 using System.Windows;
@@ -14,11 +13,23 @@ namespace PluginManagerWPF
     public class PluginInfo : INotifyPropertyChanged
     {
         private bool isDownloaded;
-
+        private string toolTip = string.Empty;
         public string Name { get; set; } = string.Empty;
         public string DisplayName { get; set; } = string.Empty;
         public string DownloadUrl { get; set; } = string.Empty;
         public string FileName { get; set; } = string.Empty;
+        public string ToolTip
+        {
+            get => toolTip;
+            set
+            {
+                if (toolTip != value)
+                {
+                    toolTip = value;
+                    OnPropertyChanged(nameof(ToolTip));
+                }
+            }
+        }
         public bool IsDownloaded
         {
             get => isDownloaded;
@@ -119,7 +130,8 @@ namespace PluginManagerWPF
                     DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/FileExtractor.dll",
                     FileName = "FileExtractor.dll",
                     IsExternalTool = false,
-                    IsBuiltInDll = true
+                    IsBuiltInDll = true,
+                    ToolTip = "一个支持各种标准计算机文件的二进制提取器"
                 },
                 new PluginInfo
                 {
@@ -128,7 +140,8 @@ namespace PluginManagerWPF
                     DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/ByteRemover.dll",
                     FileName = "ByteRemover.dll",
                     IsExternalTool = false,
-                    IsBuiltInDll = true
+                    IsBuiltInDll = true,
+                    ToolTip = "一个可以随意删除各种字节的工具，主要用它来删除各种游戏文件里填充的字节，unity游戏里经常有假文件头文件，此工具和万能二进制提取器配合使用效果更佳"
                 },
                 new PluginInfo
                 {
@@ -137,7 +150,8 @@ namespace PluginManagerWPF
                     DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/quickbmsbatch.dll",
                     FileName = "quickbmsbatch.dll",
                     IsExternalTool = false,
-                    IsBuiltInDll = true
+                    IsBuiltInDll = true,
+                    ToolTip = "quickbms辅助工具，上手简单，帮助不会使用命令行的小伙伴来批量执行解包操作"
                 },
                 new PluginInfo
                 {
@@ -146,7 +160,8 @@ namespace PluginManagerWPF
                     DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/FavoritesManager.dll",
                     FileName = "FavoritesManager.dll",
                     IsExternalTool = false,
-                    IsBuiltInDll = true
+                    IsBuiltInDll = true,
+                    ToolTip = "一个存储各种资源网站的链接收藏夹，取代传统浏览器的收藏夹，防止用户忘记浏览器的账号密码，除非网站被关闭，否则这个收藏夹管理器可以用到老"
                 },
                 new PluginInfo
                 {
@@ -155,7 +170,8 @@ namespace PluginManagerWPF
                     DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/Super-toolbox.dll",
                     FileName = "Super-toolbox.dll",
                     IsExternalTool = false,
-                    IsBuiltInDll = true
+                    IsBuiltInDll = true,
+                    ToolTip = "我制作的解包工具，可打包、解包、转换、压缩和解压，目前已经添加了100多个工具，主要用来解包游戏，查看使用手册帮助你了解各个工具的用途"
                 },
                 new PluginInfo
                 {
@@ -164,7 +180,8 @@ namespace PluginManagerWPF
                     DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/CriFsV2Lib.Definitions.dll",
                     FileName = "CriFsV2Lib.Definitions.dll",
                     IsExternalTool = false,
-                    IsBuiltInDll = true
+                    IsBuiltInDll = true,
+                    ToolTip = "超级工具箱的依赖，缺少它可能导致超级工具箱无法正常运行"
                 },
                 new PluginInfo
                 {
@@ -173,7 +190,8 @@ namespace PluginManagerWPF
                     DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/Sofdec2_Viewer.exe",
                     FileName = "Sofdec2_Viewer.exe",
                     IsExternalTool = true,
-                    IsBuiltInDll = false
+                    IsBuiltInDll = false,
+                    ToolTip = "使用它可以直接预览查看CRIWARE的未加密的usm视频"
                 },
                 new PluginInfo
                 {
@@ -182,7 +200,8 @@ namespace PluginManagerWPF
                     DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/radvideo64.exe",
                     FileName = "radvideo64.exe",
                     IsExternalTool = true,
-                    IsBuiltInDll = false
+                    IsBuiltInDll = false,
+                    ToolTip = "使用它可以直接预览查看rad game tools的bink视频，这些视频的文件扩展名一般为bk2格式，但是地雷社有些游戏经常将其伪装成usm视频"
                 },
                 new PluginInfo
                 {
@@ -191,7 +210,8 @@ namespace PluginManagerWPF
                     DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/quickbms.exe",
                     FileName = "quickbms.exe",
                     IsExternalTool = true,
-                    IsBuiltInDll = false
+                    IsBuiltInDll = false,
+                    ToolTip = "我已经汉化了命令行窗口里的部分文本"
                 },
                 new PluginInfo
                 {
@@ -200,7 +220,8 @@ namespace PluginManagerWPF
                     DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/quickbms_4gb_files.exe",
                     FileName = "quickbms_4gb_files.exe",
                     IsExternalTool = true,
-                    IsBuiltInDll = false
+                    IsBuiltInDll = false,
+                    ToolTip = "我已经汉化了命令行窗口里的部分文本，4gb版本"
                 },
                 new PluginInfo
                 {
@@ -209,7 +230,8 @@ namespace PluginManagerWPF
                     DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/RioX.exe",
                     FileName = "RioX汉化版.exe",
                     IsExternalTool = true,
-                    IsBuiltInDll = false
+                    IsBuiltInDll = false,
+                    ToolTip = "一个可以从galgame游戏rio文件里面提取图片的工具",
                 },
                 new PluginInfo
                 {
@@ -218,7 +240,8 @@ namespace PluginManagerWPF
                     DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/pak_explorer.exe",
                     FileName = "pak_explorer.exe",
                     IsExternalTool = true,
-                    IsBuiltInDll = false
+                    IsBuiltInDll = false,
+                    ToolTip = "一个可以解包LUCA system pak的工具"
                 },
                 new PluginInfo
                 {
@@ -227,7 +250,8 @@ namespace PluginManagerWPF
                     DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/PSound.exe",
                     FileName = "PSound.exe",
                     IsExternalTool = true,
-                    IsBuiltInDll = false
+                    IsBuiltInDll = false,
+                    ToolTip = "一个可以从PlayStation游戏文件里面提取pcm、vag、at3等音频的工具"
                 },
                 new PluginInfo
                 {
@@ -236,7 +260,8 @@ namespace PluginManagerWPF
                     DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/WinAsar.exe",
                     FileName = "WinAsar汉化版.exe",
                     IsExternalTool = true,
-                    IsBuiltInDll = false
+                    IsBuiltInDll = false,
+                    ToolTip = "一个可以解包和打包asar的工具"
                 },
                 new PluginInfo
                 {
@@ -245,7 +270,8 @@ namespace PluginManagerWPF
                     DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/ACE.exe",
                     FileName = "ACE.exe",
                     IsExternalTool = true,
-                    IsBuiltInDll = false
+                    IsBuiltInDll = false,
+                    ToolTip = "一个可以编辑acb/awb的工具，同时它还是个播放器，可以acb/awb里面的hca，并且可以把hca转换成adx、dsp、wav"
                 },
                 new PluginInfo
                 {
@@ -254,7 +280,8 @@ namespace PluginManagerWPF
                     DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/WinPCK.exe",
                     FileName = "WinPCK.exe",
                     IsExternalTool = true,
-                    IsBuiltInDll = false
+                    IsBuiltInDll = false,
+                    ToolTip = "一个支持很多完美世界游戏的pck解包工具"
                 },
                 new PluginInfo
                 {
@@ -263,7 +290,8 @@ namespace PluginManagerWPF
                     DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/RetsukoSoundTool.exe",
                     FileName = "RetsukoSoundTool.exe",
                     IsExternalTool = true,
-                    IsBuiltInDll = false
+                    IsBuiltInDll = false,
+                    ToolTip = "一个支持任天堂3ds游戏和wiiu游戏的音频提取器"
                 },
                 new PluginInfo
                 {
@@ -272,7 +300,8 @@ namespace PluginManagerWPF
                     DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/Motrix_x64.exe",
                     FileName = "Motrix_x64.exe",
                     IsExternalTool = true,
-                    IsBuiltInDll = false
+                    IsBuiltInDll = false,
+                    ToolTip = "一个免费的下载器，没开迅雷会员的可以试试"
                 },
                 new PluginInfo
                 {
@@ -281,7 +310,8 @@ namespace PluginManagerWPF
                     DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/UmodelHelper.exe",
                     FileName = "UmodelHelper.exe",
                     IsExternalTool = true,
-                    IsBuiltInDll = false
+                    IsBuiltInDll = false,
+                    ToolTip = "Umodel的辅助工具，使用C#语言编写，帮助用户在解包虚幻引擎游戏的时候不用频繁输入密钥，只要在这个工具里面添加游戏密钥就可以用它启动umodel了"
                 },
                 new PluginInfo
                 {
@@ -290,7 +320,8 @@ namespace PluginManagerWPF
                     DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/cmake-gui.exe",
                     FileName = "cmake-gui.exe",
                     IsExternalTool = true,
-                    IsBuiltInDll = false
+                    IsBuiltInDll = false,
+                    ToolTip = "我汉化的CMakegui，主窗口大部分文本已汉化，帮助用户把CMake的CMakelist.txt生成其他编译器需要的方案解决文件"
                 },
                 new PluginInfo
                 {
@@ -299,7 +330,8 @@ namespace PluginManagerWPF
                     DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/QuickWaveBank.exe",
                     FileName = "QuickWaveBank.exe",
                     IsExternalTool = true,
-                    IsBuiltInDll = false
+                    IsBuiltInDll = false,
+                    ToolTip = "一个可以打包解包xwb文件的工具"
                 },
                 new PluginInfo
                 {
@@ -311,7 +343,8 @@ namespace PluginManagerWPF
                     IsBuiltInDll = false,
                     IsZipFile = true,
                     ExeFileName = "CpkFileBuilder.exe",
-                    ExtractFolder = "CpkFileBuilder"
+                    ExtractFolder = "CpkFileBuilder",
+                    ToolTip = "Criware的CPK官方打包解包工具，已被我汉化大部分文本"
                 },
                 new PluginInfo
                 {
@@ -323,7 +356,8 @@ namespace PluginManagerWPF
                     IsBuiltInDll = false,
                     IsZipFile = true,
                     ExeFileName = "IDMan.exe",
-                    ExtractFolder = "IDM"
+                    ExtractFolder = "IDM",
+                    ToolTip = "一个免费的下载器，和Motrix差不多"
                 },
                 new PluginInfo
                 {
@@ -335,7 +369,8 @@ namespace PluginManagerWPF
                     IsBuiltInDll = false,
                     IsZipFile = true,
                     ExeFileName = "PVRViewer.exe",
-                    ExtractFolder = "PVRViewer"
+                    ExtractFolder = "PVRViewer",
+                    ToolTip = "PVRTC查看器和解包工具，此PVR非彼PVR，使用TexturePackerGui无效"
                 },
                 new PluginInfo
                 {
@@ -347,7 +382,8 @@ namespace PluginManagerWPF
                     IsBuiltInDll = false,
                     IsZipFile = true,
                     ExeFileName = "GD-ROM Explorer.exe",
-                    ExtractFolder = "GD-ROM-Explorer"
+                    ExtractFolder = "GD-ROM-Explorer",
+                    ToolTip = "世嘉游戏cdi、gdi格式的rom解包器"
                 },
                 new PluginInfo
                 {
@@ -359,7 +395,8 @@ namespace PluginManagerWPF
                     IsBuiltInDll = false,
                     IsZipFile = true,
                     ExeFileName = "CDmage.exe",
-                    ExtractFolder = "CDmage"
+                    ExtractFolder = "CDmage",
+                    ToolTip = "一个可以解包很多ISO游戏镜像的工具，如果你在解包ISO镜像时遇到了困难，可以试试它"
                 },
                 new PluginInfo
                 {
@@ -371,7 +408,8 @@ namespace PluginManagerWPF
                     IsBuiltInDll = false,
                     IsZipFile = true,
                     ExeFileName = "VGMTrans.exe",
-                    ExtractFolder = "VGMTrans"
+                    ExtractFolder = "VGMTrans",
+                    ToolTip = "一个可以从任天堂nds游戏里面提取音频的工具，比如mid格式"
                 },
                 new PluginInfo
                 {
@@ -383,7 +421,8 @@ namespace PluginManagerWPF
                     IsBuiltInDll = false,
                     IsZipFile = true,
                     ExeFileName = "Citric Composer.exe",
-                    ExtractFolder = "CitricComposer"
+                    ExtractFolder = "CitricComposer",
+                    ToolTip = "一个支持任天堂3ds、wiiu游戏的音频播放器和解包器，不支持wii，该软件已被我使用源码汉化，还修复了一个运行报错的bug，编译报错不可怕，可怕的是运行报错"
                 },
                 new PluginInfo
                 {
@@ -395,7 +434,8 @@ namespace PluginManagerWPF
                     IsBuiltInDll = false,
                     IsZipFile = true,
                     ExeFileName = "toolbox.exe",
-                    ExtractFolder = "toolbox"
+                    ExtractFolder = "toolbox",
+                    ToolTip = "一个支持任天堂3ds、wiiu游戏的解包工具箱，似乎不是很好用"
                 },
                 new PluginInfo
                 {
@@ -404,7 +444,8 @@ namespace PluginManagerWPF
                     DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/CPKBrowser.exe",
                     FileName = "CPKBrowser.exe",
                     IsExternalTool = true,
-                    IsBuiltInDll = false
+                    IsBuiltInDll = false,
+                    ToolTip = "一个CPK解包工具，可以查看cpk文件里面的目录结构，和garbro差不多"
                 },
                 new PluginInfo
                 {
@@ -413,7 +454,8 @@ namespace PluginManagerWPF
                     DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/Nartools.exe",
                     FileName = "Nartools.exe",
                     IsExternalTool = true,
-                    IsBuiltInDll = false
+                    IsBuiltInDll = false,
+                    ToolTip = "CSOL的nar解包工具"
                 },
                 new PluginInfo
                 {
@@ -425,7 +467,8 @@ namespace PluginManagerWPF
                     IsBuiltInDll = false,
                     IsZipFile = true,
                     ExeFileName = "fsbank.exe",
-                    ExtractFolder = "fsbank"
+                    ExtractFolder = "fsbank",
+                    ToolTip = "Fmod的fsb样本打包器，主窗口大部分文本已被我汉化，想打包fsb的可以试试"
                 }
             };
 
@@ -533,6 +576,7 @@ namespace PluginManagerWPF
             {
                 Assembly assembly = Assembly.LoadFrom(filePath);
 
+                // 优先查找名称中包含 "Main" 或 "SuperToolbox" 的窗口类型
                 var windowTypes = assembly.GetTypes()
                     .Where(t => typeof(System.Windows.Window).IsAssignableFrom(t) && !t.IsAbstract)
                     .ToList();
@@ -546,25 +590,49 @@ namespace PluginManagerWPF
                     throw new Exception($"在{plugin.FileName} 中找不到窗体类(WPF Window或WinForms Form)");
                 }
 
-                if (windowTypes.Count > 0)
+                Type? mainWindowType = null;
+
+                mainWindowType = windowTypes.FirstOrDefault(t =>
+                    t.Name.Contains("SuperToolbox", StringComparison.OrdinalIgnoreCase));
+
+                if (mainWindowType == null)
                 {
-                    LaunchWpfWindow(plugin, windowTypes);
+                    mainWindowType = formTypes.FirstOrDefault(t =>
+                        t.Name.Contains("SuperToolbox", StringComparison.OrdinalIgnoreCase));
+                }
+                if (mainWindowType == null)
+                {
+                    mainWindowType = windowTypes.FirstOrDefault(t =>
+                        t.Name.Contains("Main", StringComparison.OrdinalIgnoreCase));
+                }
+
+                if (mainWindowType == null)
+                {
+                    mainWindowType = formTypes.FirstOrDefault(t =>
+                        t.Name.Contains("Main", StringComparison.OrdinalIgnoreCase));
+                }
+
+                if (mainWindowType == null)
+                {
+                    if (windowTypes.Count > 0)
+                        mainWindowType = windowTypes[0];
+                    else if (formTypes.Count > 0)
+                        mainWindowType = formTypes[0];
+                }
+
+                if (mainWindowType == null)
+                {
+                    throw new Exception("无法确定主窗口类型");
+                }
+
+                if (typeof(System.Windows.Window).IsAssignableFrom(mainWindowType))
+                {
+                    LaunchWpfWindow(plugin, new List<Type> { mainWindowType });
                 }
                 else
                 {
-                    LaunchWinFormsForm(plugin, formTypes);
+                    LaunchWinFormsForm(plugin, new List<Type> { mainWindowType });
                 }
-            }
-            catch (ReflectionTypeLoadException ex)
-            {
-                string errorDetails = "类型加载失败:\n";
-                foreach (var loaderException in ex.LoaderExceptions)
-                {
-                    errorDetails += $"- {loaderException?.Message}\n";
-                }
-
-                MessageBox.Show($"加载DLL插件失败:{errorDetails}", "错误",
-                    MessageBoxButton.OK, MessageBoxImage.Error);
             }
             catch (Exception ex)
             {
