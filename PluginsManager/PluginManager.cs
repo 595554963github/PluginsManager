@@ -76,47 +76,15 @@ namespace PluginManagerWPF
         {
             PluginsDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins");
 
-            AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
+            AppDomain.CurrentDomain.AssemblyResolve += EnhancedAssemblyResolve;
 
             InitializePluginList();
             InitializePlugins();
         }
 
-        private Assembly? CurrentDomain_AssemblyResolve(object? sender, ResolveEventArgs args)
+        private Assembly? EnhancedAssemblyResolve(object? sender, ResolveEventArgs args)
         {
-            try
-            {
-                string? assemblyName = new AssemblyName(args.Name).Name;
-
-                if (!string.IsNullOrEmpty(assemblyName))
-                {
-                    string possiblePath = Path.Combine(PluginsDirectory, $"{assemblyName}.dll");
-
-                    if (File.Exists(possiblePath))
-                    {
-                        return Assembly.LoadFrom(possiblePath);
-                    }
-
-                    possiblePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"{assemblyName}.dll");
-                    if (File.Exists(possiblePath))
-                    {
-                        return Assembly.LoadFrom(possiblePath);
-                    }
-
-                    possiblePath = Path.Combine(AppContext.BaseDirectory, $"{assemblyName}.dll");
-                    if (File.Exists(possiblePath))
-                    {
-                        return Assembly.LoadFrom(possiblePath);
-                    }
-                }
-
-                return null;
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"程序集解析失败，名称为{args.Name}: {ex.Message}");
-                return null;
-            }
+            return null;
         }
 
         private void InitializePluginList()
@@ -172,16 +140,6 @@ namespace PluginManagerWPF
                     IsExternalTool = false,
                     IsBuiltInDll = true,
                     ToolTip = "我制作的解包工具，可打包、解包、转换、压缩和解压，目前已经添加了100多个工具，主要用来解包游戏，查看使用手册帮助你了解各个工具的用途"
-                },
-                new PluginInfo
-                {
-                    Name = "CriFsV2Lib.Definitions.dll",
-                    DisplayName = "超级工具箱dll依赖",
-                    DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/CriFsV2Lib.Definitions.dll",
-                    FileName = "CriFsV2Lib.Definitions.dll",
-                    IsExternalTool = false,
-                    IsBuiltInDll = true,
-                    ToolTip = "超级工具箱的依赖，缺少它可能导致超级工具箱无法正常运行"
                 },
                 new PluginInfo
                 {
@@ -562,88 +520,128 @@ namespace PluginManagerWPF
 
         private bool IsDependencyFile(PluginInfo plugin)
         {
-            var dependencyFiles = new HashSet<string>
-            {
-                "CriFsV2Lib.Definitions.dll",
-            };
-
-            return dependencyFiles.Contains(plugin.FileName);
+            return false;
         }
 
         private void LaunchBuiltInDll(PluginInfo plugin, string filePath)
         {
             try
             {
-                Assembly assembly = Assembly.LoadFrom(filePath);
-
-                // 优先查找名称中包含 "Main" 或 "SuperToolbox" 的窗口类型
-                var windowTypes = assembly.GetTypes()
-                    .Where(t => typeof(System.Windows.Window).IsAssignableFrom(t) && !t.IsAbstract)
-                    .ToList();
-
-                var formTypes = assembly.GetTypes()
-                    .Where(t => typeof(System.Windows.Forms.Form).IsAssignableFrom(t) && !t.IsAbstract)
-                    .ToList();
-
-                if (windowTypes.Count == 0 && formTypes.Count == 0)
+                if (plugin.FileName.Equals("Super-toolbox.dll", StringComparison.OrdinalIgnoreCase))
                 {
-                    throw new Exception($"在{plugin.FileName} 中找不到窗体类(WPF Window或WinForms Form)");
-                }
-
-                Type? mainWindowType = null;
-
-                mainWindowType = windowTypes.FirstOrDefault(t =>
-                    t.Name.Contains("SuperToolbox", StringComparison.OrdinalIgnoreCase));
-
-                if (mainWindowType == null)
-                {
-                    mainWindowType = formTypes.FirstOrDefault(t =>
-                        t.Name.Contains("SuperToolbox", StringComparison.OrdinalIgnoreCase));
-                }
-                if (mainWindowType == null)
-                {
-                    mainWindowType = windowTypes.FirstOrDefault(t =>
-                        t.Name.Contains("Main", StringComparison.OrdinalIgnoreCase));
-                }
-
-                if (mainWindowType == null)
-                {
-                    mainWindowType = formTypes.FirstOrDefault(t =>
-                        t.Name.Contains("Main", StringComparison.OrdinalIgnoreCase));
-                }
-
-                if (mainWindowType == null)
-                {
-                    if (windowTypes.Count > 0)
-                        mainWindowType = windowTypes[0];
-                    else if (formTypes.Count > 0)
-                        mainWindowType = formTypes[0];
-                }
-
-                if (mainWindowType == null)
-                {
-                    throw new Exception("无法确定主窗口类型");
-                }
-
-                if (typeof(System.Windows.Window).IsAssignableFrom(mainWindowType))
-                {
-                    LaunchWpfWindow(plugin, new List<Type> { mainWindowType });
+                    LaunchSuperToolboxSafely(plugin, filePath);
                 }
                 else
                 {
-                    LaunchWinFormsForm(plugin, new List<Type> { mainWindowType });
+                    LaunchBuiltInDllNormal(plugin, filePath);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"加载DLL插件失败:{ex.Message}", "错误",
+                MessageBox.Show($"加载{plugin.DisplayName}失败:{ex.Message}", "错误",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
+        private void LaunchSuperToolboxSafely(PluginInfo plugin, string filePath)
+        {
+            try
+            {
+                Assembly assembly = Assembly.LoadFrom(filePath);
+
+                Type? superToolboxType = assembly.GetType("super_toolbox.SuperToolbox");
+                if (superToolboxType != null)
+                {
+                    if (typeof(System.Windows.Forms.Form).IsAssignableFrom(superToolboxType))
+                    {
+                        LaunchWinFormsForm(plugin, new List<Type> { superToolboxType });
+                        return;
+                    }
+                }
+
+                var formTypes = assembly.GetTypes()
+                    .Where(t => t != null && typeof(System.Windows.Forms.Form).IsAssignableFrom(t) && !t.IsAbstract)
+                    .ToList();
+
+                if (formTypes.Count > 0)
+                {
+                    Type? mainFormType = formTypes.FirstOrDefault(t =>
+                        (t.Name.Contains("SuperToolbox", StringComparison.OrdinalIgnoreCase) ||
+                         t.Name.Contains("Main", StringComparison.OrdinalIgnoreCase))) ?? formTypes[0];
+
+                    if (mainFormType != null)
+                    {
+                        LaunchWinFormsForm(plugin, new List<Type> { mainFormType });
+                        return;
+                    }
+                }
+
+                throw new Exception("在SuperToolbox中找不到可用的窗体类型");
+            }
+            catch (ReflectionTypeLoadException)
+            {
+                RetryLaunchSuperToolbox(plugin, filePath);
+            }
+        }
+
+        private void LaunchBuiltInDllNormal(PluginInfo plugin, string filePath)
+        {
+            Assembly assembly = Assembly.LoadFrom(filePath);
+
+            var windowTypes = assembly.GetTypes()
+                .Where(t => t != null && typeof(System.Windows.Window).IsAssignableFrom(t) && !t.IsAbstract)
+                .ToList();
+
+            var formTypes = assembly.GetTypes()
+                .Where(t => t != null && typeof(System.Windows.Forms.Form).IsAssignableFrom(t) && !t.IsAbstract)
+                .ToList();
+
+            if (windowTypes.Count == 0 && formTypes.Count == 0)
+            {
+                throw new Exception($"在{plugin.FileName}中找不到窗体类(WPF Window或WinForms Form)");
+            }
+
+            if (windowTypes.Count > 0)
+            {
+                LaunchWpfWindow(plugin, windowTypes);
+            }
+            else
+            {
+                LaunchWinFormsForm(plugin, formTypes);
+            }
+        }
+
+        private void RetryLaunchSuperToolbox(PluginInfo plugin, string filePath)
+        {
+            try
+            {
+                Assembly assembly = Assembly.LoadFrom(filePath);
+
+                Type? superToolboxType = assembly.GetType("super_toolbox.SuperToolbox");
+                if (superToolboxType != null)
+                {
+                    var instance = Activator.CreateInstance(superToolboxType);
+                    if (instance is System.Windows.Forms.Form form)
+                    {
+                        form.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+                        form.Show();
+                        return;
+                    }
+                }
+
+                throw new Exception("无法创建SuperToolbox实例");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"启动SuperToolbox失败:{ex.Message}", "错误",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         private void LaunchWpfWindow(PluginInfo plugin, List<Type> windowTypes)
         {
             Type? mainWindowType = windowTypes.FirstOrDefault(t =>
-                t.Name.Contains("Main", StringComparison.OrdinalIgnoreCase)) ?? windowTypes[0];
+                t != null && t.Name.Contains("Main", StringComparison.OrdinalIgnoreCase)) ?? windowTypes[0];
 
             if (mainWindowType == null)
             {
@@ -674,14 +672,15 @@ namespace PluginManagerWPF
                 }
                 else
                 {
-                    throw new Exception($"无法创建窗口实例: {mainWindowType.FullName}");
+                    throw new Exception($"无法创建窗口实例:{mainWindowType.FullName}");
                 }
             });
         }
+
         private void LaunchWinFormsForm(PluginInfo plugin, List<Type> formTypes)
         {
             Type? mainFormType = formTypes.FirstOrDefault(t =>
-                t.Name.Contains("Main", StringComparison.OrdinalIgnoreCase)) ?? formTypes[0];
+                t != null && t.Name.Contains("Main", StringComparison.OrdinalIgnoreCase)) ?? formTypes[0];
 
             if (mainFormType == null) return;
 
@@ -702,6 +701,7 @@ namespace PluginManagerWPF
                 mainForm.Show();
             }
         }
+
         public void UninstallPlugin(PluginInfo plugin)
         {
             try
@@ -730,7 +730,7 @@ namespace PluginManagerWPF
             }
             catch (Exception ex)
             {
-                throw new Exception($"卸载{plugin.DisplayName}失败: {ex.Message}", ex);
+                throw new Exception($"卸载{plugin.DisplayName}失败:{ex.Message}", ex);
             }
         }
 
