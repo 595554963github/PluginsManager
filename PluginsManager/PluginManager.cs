@@ -113,16 +113,6 @@ namespace PluginManagerWPF
                 },
                 new PluginInfo
                 {
-                    Name = "quickbmsbatch",
-                    DisplayName = "quickbms批量提取器",
-                    DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/quickbmsbatch.dll",
-                    FileName = "quickbmsbatch.dll",
-                    IsExternalTool = false,
-                    IsBuiltInDll = true,
-                    ToolTip = "quickbms辅助工具，上手简单，帮助不会使用命令行的小伙伴来批量执行解包操作"
-                },
-                new PluginInfo
-                {
                     Name = "FavoritesManager",
                     DisplayName = "收藏夹管理器",
                     DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/FavoritesManager.dll",
@@ -150,16 +140,6 @@ namespace PluginManagerWPF
                     IsExternalTool = true,
                     IsBuiltInDll = false,
                     ToolTip = "使用它可以直接预览查看CRIWARE的未加密的usm视频"
-                },
-                new PluginInfo
-                {
-                    Name = "RadVideo",
-                    DisplayName = "bink视频播放器",
-                    DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/radvideo64.exe",
-                    FileName = "radvideo64.exe",
-                    IsExternalTool = true,
-                    IsBuiltInDll = false,
-                    ToolTip = "使用它可以直接预览查看rad game tools的bink视频，这些视频的文件扩展名一般为bk2格式，但是地雷社有些游戏经常将其伪装成usm视频"
                 },
                 new PluginInfo
                 {
