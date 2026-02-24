@@ -76,15 +76,47 @@ namespace PluginManagerWPF
         {
             PluginsDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins");
 
-            AppDomain.CurrentDomain.AssemblyResolve += EnhancedAssemblyResolve;
+            AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
 
             InitializePluginList();
             InitializePlugins();
         }
 
-        private Assembly? EnhancedAssemblyResolve(object? sender, ResolveEventArgs args)
+        private Assembly? CurrentDomain_AssemblyResolve(object? sender, ResolveEventArgs args)
         {
-            return null;
+            try
+            {
+                string? assemblyName = new AssemblyName(args.Name).Name;
+
+                if (!string.IsNullOrEmpty(assemblyName))
+                {
+                    string possiblePath = Path.Combine(PluginsDirectory, $"{assemblyName}.dll");
+
+                    if (File.Exists(possiblePath))
+                    {
+                        return Assembly.LoadFrom(possiblePath);
+                    }
+
+                    possiblePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"{assemblyName}.dll");
+                    if (File.Exists(possiblePath))
+                    {
+                        return Assembly.LoadFrom(possiblePath);
+                    }
+
+                    possiblePath = Path.Combine(AppContext.BaseDirectory, $"{assemblyName}.dll");
+                    if (File.Exists(possiblePath))
+                    {
+                        return Assembly.LoadFrom(possiblePath);
+                    }
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"程序集解析失败,名称为{args.Name}: {ex.Message}");
+                return null;
+            }
         }
 
         private void InitializePluginList()
@@ -109,7 +141,17 @@ namespace PluginManagerWPF
                     FileName = "ByteRemover.dll",
                     IsExternalTool = false,
                     IsBuiltInDll = true,
-                    ToolTip = "一个可以随意删除各种字节的工具，主要用它来删除各种游戏文件里填充的字节，unity游戏里经常有假文件头文件，此工具和万能二进制提取器配合使用效果更佳"
+                    ToolTip = "一个可以随意删除各种字节的工具,主要用它来删除各种游戏文件里填充的字节,unity游戏里经常有假文件头文件,此工具和万能二进制提取器配合使用效果更佳"
+                },
+                new PluginInfo
+                {
+                    Name = "quickbmsbatch",
+                    DisplayName = "quickbms批量提取器",
+                    DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/quickbmsbatch.dll",
+                    FileName = "quickbmsbatch.dll",
+                    IsExternalTool = false,
+                    IsBuiltInDll = true,
+                    ToolTip = "quickbms辅助工具,上手简单,帮助不会使用命令行的小伙伴来批量执行解包操作"
                 },
                 new PluginInfo
                 {
@@ -119,7 +161,37 @@ namespace PluginManagerWPF
                     FileName = "FavoritesManager.dll",
                     IsExternalTool = false,
                     IsBuiltInDll = true,
-                    ToolTip = "一个存储各种资源网站的链接收藏夹，取代传统浏览器的收藏夹，防止用户忘记浏览器的账号密码，除非网站被关闭，否则这个收藏夹管理器可以用到老"
+                    ToolTip = "一个存储各种资源网站的链接收藏夹,取代传统浏览器的收藏夹,防止用户忘记浏览器的账号密码,除非网站被关闭,否则这个收藏夹管理器可以用到老"
+                },
+                new PluginInfo
+                {
+                    Name = "Wav2BcwavGui",
+                    DisplayName = "bcwav转换器",
+                    DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/wav2bcwav_gui.dll",
+                    FileName = "wav2bcwav_gui.dll",
+                    IsExternalTool = false,
+                    IsBuiltInDll = true,
+                    ToolTip = "将wav文件转换为任天堂3DS平台的bcwav的音频转换器"
+                },
+                new PluginInfo
+                {
+                    Name = "Wav2BfwavGui",
+                    DisplayName = "bfwav转换器",
+                    DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/wav2bfwav_gui.dll",
+                    FileName = "wav2bfwav_gui.dll",
+                    IsExternalTool = false,
+                    IsBuiltInDll = true,
+                    ToolTip = "将wav文件转换为任天堂wiiu平台的bfwav的音频转换器"
+                },
+                new PluginInfo
+                {
+                    Name = "Wav2BrwavGui",
+                    DisplayName = "brwav转换器",
+                    DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/wav2brwav_gui.dll",
+                    FileName = "wav2brwav_gui.dll",
+                    IsExternalTool = false,
+                    IsBuiltInDll = true,
+                    ToolTip = "将wav文件转换为任天堂wii平台的brwav的音频转换器"
                 },
                 new PluginInfo
                 {
@@ -129,7 +201,7 @@ namespace PluginManagerWPF
                     FileName = "Super-toolbox.dll",
                     IsExternalTool = false,
                     IsBuiltInDll = true,
-                    ToolTip = "我制作的解包工具，可打包、解包、转换、压缩和解压，目前已经添加了100多个工具，主要用来解包游戏，查看使用手册帮助你了解各个工具的用途"
+                    ToolTip = "我制作的解包工具,可打包、解包、转换、压缩和解压,目前已经添加了100多个工具,主要用来解包游戏,查看使用手册帮助你了解各个工具的用途"
                 },
                 new PluginInfo
                 {
@@ -140,6 +212,16 @@ namespace PluginManagerWPF
                     IsExternalTool = true,
                     IsBuiltInDll = false,
                     ToolTip = "使用它可以直接预览查看CRIWARE的未加密的usm视频"
+                },
+                new PluginInfo
+                {
+                    Name = "RadVideo",
+                    DisplayName = "bink视频播放器",
+                    DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/radvideo64.exe",
+                    FileName = "radvideo64.exe",
+                    IsExternalTool = true,
+                    IsBuiltInDll = false,
+                    ToolTip = "使用它可以直接预览查看rad game tools的bink视频,这些视频的文件扩展名一般为bk2格式,但是地雷社有些游戏经常将其伪装成usm视频"
                 },
                 new PluginInfo
                 {
@@ -159,7 +241,7 @@ namespace PluginManagerWPF
                     FileName = "quickbms_4gb_files.exe",
                     IsExternalTool = true,
                     IsBuiltInDll = false,
-                    ToolTip = "我已经汉化了命令行窗口里的部分文本，4gb版本"
+                    ToolTip = "我已经汉化了命令行窗口里的部分文本,4gb版本"
                 },
                 new PluginInfo
                 {
@@ -209,7 +291,7 @@ namespace PluginManagerWPF
                     FileName = "ACE.exe",
                     IsExternalTool = true,
                     IsBuiltInDll = false,
-                    ToolTip = "一个可以编辑acb/awb的工具，同时它还是个播放器，可以acb/awb里面的hca，并且可以把hca转换成adx、dsp、wav"
+                    ToolTip = "一个可以编辑acb/awb的工具,同时它还是个播放器,可以acb/awb里面的hca,并且可以把hca转换成adx、dsp、wav"
                 },
                 new PluginInfo
                 {
@@ -239,7 +321,7 @@ namespace PluginManagerWPF
                     FileName = "Motrix_x64.exe",
                     IsExternalTool = true,
                     IsBuiltInDll = false,
-                    ToolTip = "一个免费的下载器，没开迅雷会员的可以试试"
+                    ToolTip = "一个免费的下载器,没开迅雷会员的可以试试"
                 },
                 new PluginInfo
                 {
@@ -249,7 +331,7 @@ namespace PluginManagerWPF
                     FileName = "UmodelHelper.exe",
                     IsExternalTool = true,
                     IsBuiltInDll = false,
-                    ToolTip = "Umodel的辅助工具，使用C#语言编写，帮助用户在解包虚幻引擎游戏的时候不用频繁输入密钥，只要在这个工具里面添加游戏密钥就可以用它启动umodel了"
+                    ToolTip = "Umodel的辅助工具,使用C#语言编写,帮助用户在解包虚幻引擎游戏的时候不用频繁输入密钥,只要在这个工具里面添加游戏密钥就可以用它启动umodel了"
                 },
                 new PluginInfo
                 {
@@ -259,7 +341,7 @@ namespace PluginManagerWPF
                     FileName = "cmake-gui.exe",
                     IsExternalTool = true,
                     IsBuiltInDll = false,
-                    ToolTip = "我汉化的CMakegui，主窗口大部分文本已汉化，帮助用户把CMake的CMakelist.txt生成其他编译器需要的方案解决文件"
+                    ToolTip = "我汉化的CMakegui,主窗口大部分文本已汉化,帮助用户把CMake的CMakelist.txt生成其他编译器需要的方案解决文件"
                 },
                 new PluginInfo
                 {
@@ -282,7 +364,7 @@ namespace PluginManagerWPF
                     IsZipFile = true,
                     ExeFileName = "CpkFileBuilder.exe",
                     ExtractFolder = "CpkFileBuilder",
-                    ToolTip = "Criware的CPK官方打包解包工具，已被我汉化大部分文本"
+                    ToolTip = "Criware的CPK官方打包解包工具,已被我汉化大部分文本"
                 },
                 new PluginInfo
                 {
@@ -295,7 +377,7 @@ namespace PluginManagerWPF
                     IsZipFile = true,
                     ExeFileName = "IDMan.exe",
                     ExtractFolder = "IDM",
-                    ToolTip = "一个免费的下载器，和Motrix差不多"
+                    ToolTip = "一个免费的下载器,和Motrix差不多"
                 },
                 new PluginInfo
                 {
@@ -308,7 +390,7 @@ namespace PluginManagerWPF
                     IsZipFile = true,
                     ExeFileName = "PVRViewer.exe",
                     ExtractFolder = "PVRViewer",
-                    ToolTip = "PVRTC查看器和解包工具，此PVR非彼PVR，使用TexturePackerGui无效"
+                    ToolTip = "PVRTC查看器和解包工具,此PVR非彼PVR,使用TexturePackerGui无效"
                 },
                 new PluginInfo
                 {
@@ -334,7 +416,7 @@ namespace PluginManagerWPF
                     IsZipFile = true,
                     ExeFileName = "CDmage.exe",
                     ExtractFolder = "CDmage",
-                    ToolTip = "一个可以解包很多ISO游戏镜像的工具，如果你在解包ISO镜像时遇到了困难，可以试试它"
+                    ToolTip = "一个可以解包很多ISO游戏镜像的工具,如果你在解包ISO镜像时遇到了困难,可以试试它"
                 },
                 new PluginInfo
                 {
@@ -347,7 +429,7 @@ namespace PluginManagerWPF
                     IsZipFile = true,
                     ExeFileName = "VGMTrans.exe",
                     ExtractFolder = "VGMTrans",
-                    ToolTip = "一个可以从任天堂nds游戏里面提取音频的工具，比如mid格式"
+                    ToolTip = "一个可以从任天堂nds游戏里面提取音频的工具,比如mid格式"
                 },
                 new PluginInfo
                 {
@@ -360,7 +442,7 @@ namespace PluginManagerWPF
                     IsZipFile = true,
                     ExeFileName = "Citric Composer.exe",
                     ExtractFolder = "CitricComposer",
-                    ToolTip = "一个支持任天堂3ds、wiiu游戏的音频播放器和解包器，不支持wii，该软件已被我使用源码汉化，还修复了一个运行报错的bug，编译报错不可怕，可怕的是运行报错"
+                    ToolTip = "一个支持任天堂3ds、wiiu游戏的音频播放器和解包器,不支持wii,该软件已被我使用源码汉化,还修复了一个运行报错的bug,编译报错不可怕,可怕的是运行报错"
                 },
                 new PluginInfo
                 {
@@ -373,7 +455,7 @@ namespace PluginManagerWPF
                     IsZipFile = true,
                     ExeFileName = "toolbox.exe",
                     ExtractFolder = "toolbox",
-                    ToolTip = "一个支持任天堂3ds、wiiu游戏的解包工具箱，似乎不是很好用"
+                    ToolTip = "一个支持任天堂3ds、wiiu游戏的解包工具箱,似乎不是很好用"
                 },
                 new PluginInfo
                 {
@@ -383,7 +465,7 @@ namespace PluginManagerWPF
                     FileName = "CPKBrowser.exe",
                     IsExternalTool = true,
                     IsBuiltInDll = false,
-                    ToolTip = "一个CPK解包工具，可以查看cpk文件里面的目录结构，和garbro差不多"
+                    ToolTip = "一个CPK解包工具,可以查看cpk文件里面的目录结构,和garbro差不多"
                 },
                 new PluginInfo
                 {
@@ -406,7 +488,7 @@ namespace PluginManagerWPF
                     IsZipFile = true,
                     ExeFileName = "fsbank.exe",
                     ExtractFolder = "fsbank",
-                    ToolTip = "Fmod的fsb样本打包器，主窗口大部分文本已被我汉化，想打包fsb的可以试试"
+                    ToolTip = "Fmod的fsb样本打包器,主窗口大部分文本已被我汉化,想打包fsb的可以试试"
                 }
             };
 
@@ -442,7 +524,7 @@ namespace PluginManagerWPF
         {
             if (IsDependencyFile(plugin))
             {
-                MessageBox.Show($"{plugin.DisplayName} 是依赖文件，无法直接启动。", "提示",
+                MessageBox.Show($"{plugin.DisplayName} 是依赖文件,无法直接启动.", "提示",
                     MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
@@ -472,7 +554,7 @@ namespace PluginManagerWPF
                 if (!File.Exists(filePath))
                 {
                     plugin.IsDownloaded = false;
-                    MessageBox.Show($"{plugin.DisplayName}文件不存在，请重新下载", "错误",
+                    MessageBox.Show($"{plugin.DisplayName}文件不存在,请重新下载", "错误",
                         MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
@@ -500,128 +582,88 @@ namespace PluginManagerWPF
 
         private bool IsDependencyFile(PluginInfo plugin)
         {
-            return false;
+            var dependencyFiles = new HashSet<string>
+            {
+                "CriFsV2Lib.Definitions.dll",
+            };
+
+            return dependencyFiles.Contains(plugin.FileName);
         }
 
         private void LaunchBuiltInDll(PluginInfo plugin, string filePath)
         {
             try
             {
-                if (plugin.FileName.Equals("Super-toolbox.dll", StringComparison.OrdinalIgnoreCase))
+                Assembly assembly = Assembly.LoadFrom(filePath);
+
+                // 优先查找名称中包含 "Main" 或 "SuperToolbox" 的窗口类型
+                var windowTypes = assembly.GetTypes()
+                    .Where(t => typeof(System.Windows.Window).IsAssignableFrom(t) && !t.IsAbstract)
+                    .ToList();
+
+                var formTypes = assembly.GetTypes()
+                    .Where(t => typeof(System.Windows.Forms.Form).IsAssignableFrom(t) && !t.IsAbstract)
+                    .ToList();
+
+                if (windowTypes.Count == 0 && formTypes.Count == 0)
                 {
-                    LaunchSuperToolboxSafely(plugin, filePath);
+                    throw new Exception($"在{plugin.FileName} 中找不到窗体类(WPF Window或WinForms Form)");
+                }
+
+                Type? mainWindowType = null;
+
+                mainWindowType = windowTypes.FirstOrDefault(t =>
+                    t.Name.Contains("SuperToolbox", StringComparison.OrdinalIgnoreCase));
+
+                if (mainWindowType == null)
+                {
+                    mainWindowType = formTypes.FirstOrDefault(t =>
+                        t.Name.Contains("SuperToolbox", StringComparison.OrdinalIgnoreCase));
+                }
+                if (mainWindowType == null)
+                {
+                    mainWindowType = windowTypes.FirstOrDefault(t =>
+                        t.Name.Contains("Main", StringComparison.OrdinalIgnoreCase));
+                }
+
+                if (mainWindowType == null)
+                {
+                    mainWindowType = formTypes.FirstOrDefault(t =>
+                        t.Name.Contains("Main", StringComparison.OrdinalIgnoreCase));
+                }
+
+                if (mainWindowType == null)
+                {
+                    if (windowTypes.Count > 0)
+                        mainWindowType = windowTypes[0];
+                    else if (formTypes.Count > 0)
+                        mainWindowType = formTypes[0];
+                }
+
+                if (mainWindowType == null)
+                {
+                    throw new Exception("无法确定主窗口类型");
+                }
+
+                if (typeof(System.Windows.Window).IsAssignableFrom(mainWindowType))
+                {
+                    LaunchWpfWindow(plugin, new List<Type> { mainWindowType });
                 }
                 else
                 {
-                    LaunchBuiltInDllNormal(plugin, filePath);
+                    LaunchWinFormsForm(plugin, new List<Type> { mainWindowType });
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"加载{plugin.DisplayName}失败:{ex.Message}", "错误",
+                MessageBox.Show($"加载DLL插件失败:{ex.Message}", "错误",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-
-        private void LaunchSuperToolboxSafely(PluginInfo plugin, string filePath)
-        {
-            try
-            {
-                Assembly assembly = Assembly.LoadFrom(filePath);
-
-                Type? superToolboxType = assembly.GetType("super_toolbox.SuperToolbox");
-                if (superToolboxType != null)
-                {
-                    if (typeof(System.Windows.Forms.Form).IsAssignableFrom(superToolboxType))
-                    {
-                        LaunchWinFormsForm(plugin, new List<Type> { superToolboxType });
-                        return;
-                    }
-                }
-
-                var formTypes = assembly.GetTypes()
-                    .Where(t => t != null && typeof(System.Windows.Forms.Form).IsAssignableFrom(t) && !t.IsAbstract)
-                    .ToList();
-
-                if (formTypes.Count > 0)
-                {
-                    Type? mainFormType = formTypes.FirstOrDefault(t =>
-                        (t.Name.Contains("SuperToolbox", StringComparison.OrdinalIgnoreCase) ||
-                         t.Name.Contains("Main", StringComparison.OrdinalIgnoreCase))) ?? formTypes[0];
-
-                    if (mainFormType != null)
-                    {
-                        LaunchWinFormsForm(plugin, new List<Type> { mainFormType });
-                        return;
-                    }
-                }
-
-                throw new Exception("在SuperToolbox中找不到可用的窗体类型");
-            }
-            catch (ReflectionTypeLoadException)
-            {
-                RetryLaunchSuperToolbox(plugin, filePath);
-            }
-        }
-
-        private void LaunchBuiltInDllNormal(PluginInfo plugin, string filePath)
-        {
-            Assembly assembly = Assembly.LoadFrom(filePath);
-
-            var windowTypes = assembly.GetTypes()
-                .Where(t => t != null && typeof(System.Windows.Window).IsAssignableFrom(t) && !t.IsAbstract)
-                .ToList();
-
-            var formTypes = assembly.GetTypes()
-                .Where(t => t != null && typeof(System.Windows.Forms.Form).IsAssignableFrom(t) && !t.IsAbstract)
-                .ToList();
-
-            if (windowTypes.Count == 0 && formTypes.Count == 0)
-            {
-                throw new Exception($"在{plugin.FileName}中找不到窗体类(WPF Window或WinForms Form)");
-            }
-
-            if (windowTypes.Count > 0)
-            {
-                LaunchWpfWindow(plugin, windowTypes);
-            }
-            else
-            {
-                LaunchWinFormsForm(plugin, formTypes);
-            }
-        }
-
-        private void RetryLaunchSuperToolbox(PluginInfo plugin, string filePath)
-        {
-            try
-            {
-                Assembly assembly = Assembly.LoadFrom(filePath);
-
-                Type? superToolboxType = assembly.GetType("super_toolbox.SuperToolbox");
-                if (superToolboxType != null)
-                {
-                    var instance = Activator.CreateInstance(superToolboxType);
-                    if (instance is System.Windows.Forms.Form form)
-                    {
-                        form.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-                        form.Show();
-                        return;
-                    }
-                }
-
-                throw new Exception("无法创建SuperToolbox实例");
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"启动SuperToolbox失败:{ex.Message}", "错误",
-                    MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
         private void LaunchWpfWindow(PluginInfo plugin, List<Type> windowTypes)
         {
             Type? mainWindowType = windowTypes.FirstOrDefault(t =>
-                t != null && t.Name.Contains("Main", StringComparison.OrdinalIgnoreCase)) ?? windowTypes[0];
+                t.Name.Contains("Main", StringComparison.OrdinalIgnoreCase)) ?? windowTypes[0];
 
             if (mainWindowType == null)
             {
@@ -652,15 +694,14 @@ namespace PluginManagerWPF
                 }
                 else
                 {
-                    throw new Exception($"无法创建窗口实例:{mainWindowType.FullName}");
+                    throw new Exception($"无法创建窗口实例: {mainWindowType.FullName}");
                 }
             });
         }
-
         private void LaunchWinFormsForm(PluginInfo plugin, List<Type> formTypes)
         {
             Type? mainFormType = formTypes.FirstOrDefault(t =>
-                t != null && t.Name.Contains("Main", StringComparison.OrdinalIgnoreCase)) ?? formTypes[0];
+                t.Name.Contains("Main", StringComparison.OrdinalIgnoreCase)) ?? formTypes[0];
 
             if (mainFormType == null) return;
 
@@ -681,7 +722,6 @@ namespace PluginManagerWPF
                 mainForm.Show();
             }
         }
-
         public void UninstallPlugin(PluginInfo plugin)
         {
             try
@@ -692,7 +732,7 @@ namespace PluginManagerWPF
                 {
                     if (plugin.IsBuiltInDll && IsDllLoaded(plugin.FileName))
                     {
-                        throw new Exception($"{plugin.DisplayName}正在使用中,请重启插件管理器后再尝试卸载。");
+                        throw new Exception($"{plugin.DisplayName}正在使用中,请重启插件管理器后再尝试卸载.");
                     }
                     File.Delete(filePath);
                 }
@@ -710,7 +750,7 @@ namespace PluginManagerWPF
             }
             catch (Exception ex)
             {
-                throw new Exception($"卸载{plugin.DisplayName}失败:{ex.Message}", ex);
+                throw new Exception($"卸载{plugin.DisplayName}失败: {ex.Message}", ex);
             }
         }
 
