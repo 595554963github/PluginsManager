@@ -522,13 +522,6 @@ namespace PluginManagerWPF
 
         public void LaunchPlugin(PluginInfo plugin)
         {
-            if (IsDependencyFile(plugin))
-            {
-                MessageBox.Show($"{plugin.DisplayName} 是依赖文件,无法直接启动.", "提示",
-                    MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
             if (!plugin.IsDownloaded)
             {
                 MessageBox.Show($"请先下载{plugin.DisplayName}", "提示",
@@ -579,70 +572,43 @@ namespace PluginManagerWPF
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-
-        private bool IsDependencyFile(PluginInfo plugin)
-        {
-            var dependencyFiles = new HashSet<string>
-            {
-                "CriFsV2Lib.Definitions.dll",
-            };
-
-            return dependencyFiles.Contains(plugin.FileName);
-        }
-
         private void LaunchBuiltInDll(PluginInfo plugin, string filePath)
         {
             try
             {
                 Assembly assembly = Assembly.LoadFrom(filePath);
-
-                // 优先查找名称中包含 "Main" 或 "SuperToolbox" 的窗口类型
-                var windowTypes = assembly.GetTypes()
-                    .Where(t => typeof(System.Windows.Window).IsAssignableFrom(t) && !t.IsAbstract)
-                    .ToList();
-
-                var formTypes = assembly.GetTypes()
-                    .Where(t => typeof(System.Windows.Forms.Form).IsAssignableFrom(t) && !t.IsAbstract)
-                    .ToList();
-
-                if (windowTypes.Count == 0 && formTypes.Count == 0)
-                {
-                    throw new Exception($"在{plugin.FileName} 中找不到窗体类(WPF Window或WinForms Form)");
-                }
-
                 Type? mainWindowType = null;
 
-                mainWindowType = windowTypes.FirstOrDefault(t =>
-                    t.Name.Contains("SuperToolbox", StringComparison.OrdinalIgnoreCase));
-
-                if (mainWindowType == null)
+                if (plugin.Name == "SuperToolbox")
                 {
-                    mainWindowType = formTypes.FirstOrDefault(t =>
-                        t.Name.Contains("SuperToolbox", StringComparison.OrdinalIgnoreCase));
+                    mainWindowType = assembly.GetType("super_toolbox.SuperToolbox");
                 }
-                if (mainWindowType == null)
+                else
                 {
+                    var windowTypes = assembly.GetTypes()
+                        .Where(t => typeof(System.Windows.Window).IsAssignableFrom(t) && !t.IsAbstract &&
+                               !t.Name.Contains("About", StringComparison.OrdinalIgnoreCase))
+                        .ToList();
+
                     mainWindowType = windowTypes.FirstOrDefault(t =>
-                        t.Name.Contains("Main", StringComparison.OrdinalIgnoreCase));
+                        t.Name.Contains("Main", StringComparison.OrdinalIgnoreCase)) ??
+                        windowTypes.FirstOrDefault();
                 }
 
                 if (mainWindowType == null)
                 {
-                    mainWindowType = formTypes.FirstOrDefault(t =>
-                        t.Name.Contains("Main", StringComparison.OrdinalIgnoreCase));
+                    mainWindowType = assembly.GetTypes()
+                        .Where(t => typeof(System.Windows.Forms.Form).IsAssignableFrom(t) && !t.IsAbstract &&
+                               !t.Name.Contains("About", StringComparison.OrdinalIgnoreCase))
+                        .FirstOrDefault(t => t.Name.Contains("Main", StringComparison.OrdinalIgnoreCase)) ??
+                        assembly.GetTypes()
+                        .FirstOrDefault(t => typeof(System.Windows.Forms.Form).IsAssignableFrom(t) && !t.IsAbstract &&
+                               !t.Name.Contains("About", StringComparison.OrdinalIgnoreCase));
                 }
 
                 if (mainWindowType == null)
                 {
-                    if (windowTypes.Count > 0)
-                        mainWindowType = windowTypes[0];
-                    else if (formTypes.Count > 0)
-                        mainWindowType = formTypes[0];
-                }
-
-                if (mainWindowType == null)
-                {
-                    throw new Exception("无法确定主窗口类型");
+                    throw new Exception("无法找到主窗口类型");
                 }
 
                 if (typeof(System.Windows.Window).IsAssignableFrom(mainWindowType))
