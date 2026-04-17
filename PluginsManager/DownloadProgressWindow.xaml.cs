@@ -35,7 +35,7 @@ namespace PluginManagerWPF
             InitializeComponent();
             this.plugin = plugin;
             cancellationTokenSource = new CancellationTokenSource();
-            Title = $"下载 {plugin.DisplayName}";
+            Title = $"下载{plugin.DisplayName}";
 
             Loaded += async (s, e) => await StartDownloadAsync();
             Closing += OnWindowClosing;
@@ -89,7 +89,7 @@ namespace PluginManagerWPF
             {
                 isDownloading = false;
                 DeleteIncompleteFile();
-                MessageBox.Show($"下载失败: {ex.Message}", "错误",
+                MessageBox.Show($"下载失败:{ex.Message}", "错误",
                     MessageBoxButton.OK, MessageBoxImage.Error);
                 DownloadCompleted?.Invoke(this, false);
                 DialogResult = false;
@@ -108,51 +108,127 @@ namespace PluginManagerWPF
 
                 if (Directory.Exists(extractPath))
                 {
-                    Directory.Delete(extractPath, true);
+                    await Task.Run(() =>
+                    {
+                        int retryCount = 0;
+                        while (retryCount < 5)
+                        {
+                            try
+                            {
+                                Directory.Delete(extractPath, true);
+                                break;
+                            }
+                            catch
+                            {
+                                retryCount++;
+                                if (retryCount >= 5) throw;
+                                Thread.Sleep(500);
+                            }
+                        }
+                    });
                 }
+
                 Directory.CreateDirectory(extractPath);
 
                 await Task.Run(() =>
                 {
-                    ZipFile.ExtractToDirectory(filePath, extractPath, true);
-
-                    string nestedPath = Path.Combine(extractPath, plugin.ExtractFolder);
-                    string expectedExeInNested = Path.Combine(nestedPath, plugin.ExeFileName);
-
-                    if (Directory.Exists(nestedPath) && File.Exists(expectedExeInNested))
+                    using (var archive = ZipFile.OpenRead(filePath))
                     {
-                        foreach (var file in Directory.GetFiles(nestedPath))
-                        {
-                            string fileName = Path.GetFileName(file);
-                            string destFile = Path.Combine(extractPath, fileName);
-                            File.Move(file, destFile, true);
-                        }
+                        string? commonRoot = GetCommonRootDirectory(archive);
 
-                        foreach (var dir in Directory.GetDirectories(nestedPath))
+                        foreach (var entry in archive.Entries)
                         {
-                            string dirName = Path.GetFileName(dir);
-                            string destDir = Path.Combine(extractPath, dirName);
-                            Directory.Move(dir, destDir);
-                        }
+                            if (string.IsNullOrEmpty(entry.Name)) continue;
 
-                        Directory.Delete(nestedPath, true);
+                            string entryPath = entry.FullName;
+
+                            if (!string.IsNullOrEmpty(commonRoot) && entryPath.StartsWith(commonRoot))
+                            {
+                                entryPath = entryPath.Substring(commonRoot.Length);
+                            }
+
+                            string destPath = Path.Combine(extractPath, entryPath);
+                            string destDir = Path.GetDirectoryName(destPath)!;
+
+                            if (!Directory.Exists(destDir))
+                            {
+                                Directory.CreateDirectory(destDir);
+                            }
+
+                            entry.ExtractToFile(destPath, true);
+                        }
                     }
                 });
 
-                string expectedExePath = Path.Combine(extractPath, plugin.ExeFileName);
-                if (!File.Exists(expectedExePath))
+                string? foundExe = FindFileRecursive(extractPath, plugin.ExeFileName);
+                if (string.IsNullOrEmpty(foundExe))
                 {
-                    throw new Exception($"解压后未找到目标文件: {plugin.ExeFileName}。请检查ZIP文件结构。");
+                    throw new Exception($"解压后未找到目标文件:{plugin.ExeFileName}");
                 }
 
-                File.Delete(filePath);
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+
+                int retry = 0;
+                while (retry < 5)
+                {
+                    try
+                    {
+                        if (File.Exists(filePath))
+                        {
+                            File.Delete(filePath);
+                        }
+                        break;
+                    }
+                    catch
+                    {
+                        retry++;
+                        if (retry >= 5) throw;
+                        await Task.Delay(300);
+                    }
+                }
             }
             catch (Exception ex)
             {
-                throw new Exception($"解压失败：{ex.Message}");
+                throw new Exception($"解压失败:{ex.Message}");
             }
         }
+        private string? GetCommonRootDirectory(ZipArchive archive)
+        {
+            var entryPaths = archive.Entries
+                .Where(e => !string.IsNullOrEmpty(e.Name))
+                .Select(e => e.FullName.Replace('\\', '/'))
+                .ToList();
 
+            if (entryPaths.Count == 0) return null;
+
+            string firstPath = entryPaths[0];
+            var parts = firstPath.Split('/');
+            string commonRoot = "";
+
+            for (int i = 0; i < parts.Length - 1; i++)
+            {
+                string testPrefix = string.Join("/", parts.Take(i + 1)) + "/";
+
+                bool allMatch = entryPaths.All(p => p.StartsWith(testPrefix));
+                if (allMatch)
+                {
+                    commonRoot = testPrefix;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            return string.IsNullOrEmpty(commonRoot) ? null : commonRoot;
+        }
+
+        private string? FindFileRecursive(string directory, string fileName)
+        {
+            var file = Directory.GetFiles(directory, fileName, SearchOption.AllDirectories).FirstOrDefault();
+            return file;
+        }
         private HttpClient CreateHttpClient()
         {
             var handler = new HttpClientHandler()
@@ -330,7 +406,7 @@ namespace PluginManagerWPF
         {
             if (isDownloading && !isDownloadCompleted)
             {
-                var result = MessageBox.Show("下载正在进行中，确定要取消吗？", "确认关闭",
+                var result = MessageBox.Show("下载正在进行中,确定要取消吗?", "确认关闭",
                     MessageBoxButton.YesNo, MessageBoxImage.Question);
 
                 if (result == MessageBoxResult.No)

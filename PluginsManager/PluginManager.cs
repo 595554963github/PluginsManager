@@ -145,16 +145,6 @@ namespace PluginManagerWPF
                 },
                 new PluginInfo
                 {
-                    Name = "quickbmsbatch",
-                    DisplayName = "quickbms批量提取器",
-                    DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/quickbmsbatch.dll",
-                    FileName = "quickbmsbatch.dll",
-                    IsExternalTool = false,
-                    IsBuiltInDll = true,
-                    ToolTip = "quickbms辅助工具,上手简单,帮助不会使用命令行的小伙伴来批量执行解包操作"
-                },
-                new PluginInfo
-                {
                     Name = "FavoritesManager",
                     DisplayName = "收藏夹管理器",
                     DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/FavoritesManager.dll",
@@ -337,10 +327,12 @@ namespace PluginManagerWPF
                 {
                     Name = "cmake-gui",
                     DisplayName = "cmakegui汉化版",
-                    DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/cmake-gui.exe",
-                    FileName = "cmake-gui.exe",
+                    DownloadUrl = "https://gitee.com/valkylia-goddess/AssetStudio-Neptune/releases/download/down/cmakegui-4.3.1.zip",
+                    FileName = "cmakegui-4.3.1.zip",
                     IsExternalTool = true,
                     IsBuiltInDll = false,
+                    IsZipFile = true,
+                    ExtractFolder = "cmakegui-4.3.1",
                     ToolTip = "我汉化的CMakegui,主窗口大部分文本已汉化,帮助用户把CMake的CMakelist.txt生成其他编译器需要的方案解决文件"
                 },
                 new PluginInfo
@@ -507,16 +499,17 @@ namespace PluginManagerWPF
 
             foreach (var plugin in Plugins)
             {
-                string filePath;
                 if (plugin.IsZipFile && !string.IsNullOrEmpty(plugin.ExtractFolder))
                 {
-                    filePath = Path.Combine(PluginsDirectory, plugin.ExtractFolder, plugin.ExeFileName);
+                    string extractFolder = Path.Combine(PluginsDirectory, plugin.ExtractFolder);
+                    string? foundExe = FindFileRecursive(extractFolder, plugin.ExeFileName);
+                    plugin.IsDownloaded = !string.IsNullOrEmpty(foundExe) && File.Exists(foundExe);
                 }
                 else
                 {
-                    filePath = Path.Combine(PluginsDirectory, plugin.FileName);
+                    string filePath = Path.Combine(PluginsDirectory, plugin.FileName);
+                    plugin.IsDownloaded = File.Exists(filePath);
                 }
-                plugin.IsDownloaded = File.Exists(filePath);
             }
         }
 
@@ -536,8 +529,18 @@ namespace PluginManagerWPF
 
                 if (plugin.IsZipFile)
                 {
-                    filePath = Path.Combine(PluginsDirectory, plugin.ExtractFolder, plugin.ExeFileName);
-                    workingDirectory = Path.Combine(PluginsDirectory, plugin.ExtractFolder);
+                    string extractFolder = Path.Combine(PluginsDirectory, plugin.ExtractFolder);
+                    string? foundExe = FindFileRecursive(extractFolder, plugin.ExeFileName);
+
+                    if (string.IsNullOrEmpty(foundExe))
+                    {
+                        MessageBox.Show($"未找到可执行文件: {plugin.ExeFileName}", "错误",
+                            MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
+
+                    filePath = foundExe;
+                    workingDirectory = Path.GetDirectoryName(foundExe)!;
                 }
                 else
                 {
@@ -570,6 +573,18 @@ namespace PluginManagerWPF
             {
                 MessageBox.Show($"启动{plugin.DisplayName}失败:{ex.Message}", "错误",
                     MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private string? FindFileRecursive(string directory, string fileName)
+        {
+            try
+            {
+                return Directory.GetFiles(directory, fileName, SearchOption.AllDirectories).FirstOrDefault();
+            }
+            catch
+            {
+                return null;
             }
         }
         private void LaunchBuiltInDll(PluginInfo plugin, string filePath)
